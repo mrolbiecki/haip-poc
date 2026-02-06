@@ -96,6 +96,14 @@ class AudioRecorder:
     def is_recording(self) -> bool:
         return self._recording
 
+    def signal_stop(self) -> None:
+        """Signal that recording should stop without closing the stream.
+        
+        Use this when you want the audio generator to stop yielding chunks,
+        but still need to call stop() later to get the full audio data.
+        """
+        self._recording = False
+
     def get_chunk(self, timeout: float = 0.5) -> bytes | None:
         """Get the next audio chunk (for streaming to STT). Returns *None* on timeout."""
         try:

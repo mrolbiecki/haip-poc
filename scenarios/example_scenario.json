@@ -26,17 +26,6 @@
     },
     {
       "id": "q2",
-      "text": "Have you encountered any bugs or unexpected behavior?",
-      "listen_seconds": 45,
-      "follow_ups": [
-        {
-          "id": "q2_f1",
-          "text": "Can you describe what happened step by step?"
-        }
-      ]
-    },
-    {
-      "id": "q3",
       "text": "Is there anything else you would like to share about your experience?",
       "listen_seconds": 60
     }

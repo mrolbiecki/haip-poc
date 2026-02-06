@@ -1,0 +1,44 @@
+{
+  "name": "post_gameplay_feedback",
+  "voice": {
+    "language_code": "en-US",
+    "name": "en-US-Neural2-D"
+  },
+  "trigger": {
+    "type": "time",
+    "delay_seconds": 10
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "text": "How are you finding the game so far?",
+      "listen_seconds": 30,
+      "follow_ups": [
+        {
+          "id": "q1_f1",
+          "text": "Could you elaborate on what you enjoyed most?"
+        },
+        {
+          "id": "q1_f2",
+          "text": "What specifically has been frustrating?"
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "text": "Have you encountered any bugs or unexpected behavior?",
+      "listen_seconds": 45,
+      "follow_ups": [
+        {
+          "id": "q2_f1",
+          "text": "Can you describe what happened step by step?"
+        }
+      ]
+    },
+    {
+      "id": "q3",
+      "text": "Is there anything else you would like to share about your experience?",
+      "listen_seconds": 60
+    }
+  ]
+}

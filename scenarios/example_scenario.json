@@ -6,7 +6,7 @@
   },
   "trigger": {
     "type": "time",
-    "delay_seconds": 10
+    "delay_seconds": 30
   },
   "questions": [
     {

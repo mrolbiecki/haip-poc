@@ -53,33 +53,32 @@ def main() -> None:
     app = QApplication(sys.argv)
 
     # Overlay
-    from haip_poc.overlay import OverlayWindow
+    # Overlay
+    from haip_poc.overlay import AgentWindow
 
-    overlay = OverlayWindow()
-    overlay.show()
+    window = AgentWindow()
+    window.show()
 
     # Agent
     agent = InterviewAgent(scenario, output_dir)
 
-    # Connect agent signals → overlay
+    # Connect agent signals → window
     def on_state_changed(state_str: str) -> None:
         state = AgentState(state_str)
         if state == AgentState.WAITING:
-            overlay.icon.set_active(False)
+            window.icon.set_active(False)
         elif state == AgentState.ASKING:
-            overlay.expand()
-            overlay.icon.set_active(True)
+            window.icon.set_active(True)
         elif state == AgentState.LISTENING:
-            overlay.icon.set_listening(True)
+            window.icon.set_listening(True)
         elif state == AgentState.PROCESSING:
-            overlay.icon.set_active(True)
+            window.icon.set_active(True)
         elif state == AgentState.DONE:
-            overlay.icon.set_active(False)
-            overlay.collapse()
+            window.icon.set_active(False)
 
     agent.state_changed.connect(on_state_changed)
-    agent.question_text.connect(overlay.panel.set_question)
-    agent.status_text.connect(overlay.panel.set_status)
+    agent.question_text.connect(window.set_question)
+    agent.status_text.connect(window.set_status)
 
     # Arm the trigger (non-blocking – just starts a QTimer).
     # The agent internally spawns a worker thread when the timer fires.

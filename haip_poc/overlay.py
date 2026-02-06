@@ -1,20 +1,44 @@
-"""Transparent always-on-top overlay window using PyQt6."""
+"""Standard application window for the agent."""
 
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath
 from PyQt6.QtWidgets import (
     QApplication,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
+    QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 
-class OverlayIcon(QWidget):
+class CloseButton(QPushButton):
+    """Small X button to close the application."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__("×", parent)
+        self.setFixedSize(20, 20)
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(200, 60, 60, 180);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: rgba(220, 80, 80, 220);
+            }
+            QPushButton:pressed {
+                background-color: rgba(180, 40, 40, 220);
+            }
+        """)
+
+
+class AgentIcon(QWidget):
     """Small circular indicator that pulses when the agent is active."""
 
     RADIUS = 28
@@ -74,109 +98,71 @@ class OverlayIcon(QWidget):
         painter.end()
 
 
-class OverlayPanel(QWidget):
-    """Expanded panel showing current question and status."""
+class AgentWindow(QWidget):
+    """Main agent window with status and question display."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.setFixedWidth(380)
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 12, 16, 12)
-
-        self._question_label = QLabel("")
-        self._question_label.setWordWrap(True)
-        self._question_label.setFont(QFont("Sans", 12))
-        self._question_label.setStyleSheet("color: white;")
-
-        self._status_label = QLabel("")
-        self._status_label.setFont(QFont("Sans", 10))
-        self._status_label.setStyleSheet("color: rgba(255,255,255,0.7);")
-
-        layout.addWidget(self._question_label)
-        layout.addWidget(self._status_label)
-
-    def set_question(self, text: str) -> None:
-        self._question_label.setText(text)
-        self.adjustSize()
-
-    def set_status(self, text: str) -> None:
-        self._status_label.setText(text)
-
-    def paintEvent(self, event: object) -> None:  # noqa: N802
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setBrush(QColor(30, 30, 30, 210))
-        painter.setPen(Qt.PenStyle.NoPen)
-        path = QPainterPath()
-        path.addRoundedRect(0, 0, self.width(), self.height(), 12, 12)
-        painter.drawPath(path)
-        painter.end()
-
-
-class OverlayWindow(QWidget):
-    """Main overlay window – positions itself in the bottom-right corner."""
+    close_requested = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.Tool
-        )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
-
-        # Shadow
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(20)
-        shadow.setOffset(0, 2)
-        shadow.setColor(QColor(0, 0, 0, 100))
-        self.setGraphicsEffect(shadow)
+        self.setWindowTitle("HAIP Agent")
+        self.resize(500, 300)
+        
+        # Determine background color based on system theme or default to dark
+        # using a stylesheet for basic theming
+        self.setStyleSheet("background-color: #2b2b2b; color: #ffffff;")
 
         # Layout
-        main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(8, 8, 8, 8)
-        main_layout.setSpacing(8)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(16)
 
-        self._panel = OverlayPanel()
-        self._icon = OverlayIcon()
+        # Header: Icon + Status
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(16)
 
-        main_layout.addWidget(self._panel)
-        main_layout.addWidget(self._icon)
+        self._icon = AgentIcon()
+        self._status_label = QLabel("Ready")
+        self._status_label.setFont(QFont("Sans", 10))
+        self._status_label.setStyleSheet("color: #aaaaaa;")
+        
+        header_layout.addWidget(self._icon)
+        header_layout.addWidget(self._status_label)
+        header_layout.addStretch()
 
-        self._panel.hide()
-        self._reposition()
+        # Question Display
+        self._question_label = QLabel("")
+        self._question_label.setWordWrap(True)
+        self._question_label.setFont(QFont("Sans", 14))
+        self._question_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        
+        # Add to main layout
+        main_layout.addLayout(header_layout)
+        main_layout.addWidget(self._question_label, stretch=1)
+        
+        # Center on screen initially
+        self._center_on_screen()
 
     # -- public API ----------------------------------------------------------
 
     @property
-    def panel(self) -> OverlayPanel:
-        return self._panel
-
-    @property
-    def icon(self) -> OverlayIcon:
+    def icon(self) -> AgentIcon:
         return self._icon
 
-    def expand(self) -> None:
-        self._panel.show()
-        self.adjustSize()
-        self._reposition()
+    def set_question(self, text: str) -> None:
+        self._question_label.setText(text)
 
-    def collapse(self) -> None:
-        self._panel.hide()
-        self.adjustSize()
-        self._reposition()
+    def set_status(self, text: str) -> None:
+        self._status_label.setText(text)
 
     # -- internal ------------------------------------------------------------
 
-    def _reposition(self) -> None:
-        """Place the widget in the bottom-right of the primary screen."""
+    def _center_on_screen(self) -> None:
         screen = QApplication.primaryScreen()
         if screen is None:
             return
         geo = screen.availableGeometry()
-        self.adjustSize()
-        x = geo.right() - self.width() - 24
-        y = geo.bottom() - self.height() - 24
-        self.move(x, y)
+        center = geo.center()
+        frame_geo = self.frameGeometry()
+        frame_geo.moveCenter(center)
+        self.move(frame_geo.topLeft())
